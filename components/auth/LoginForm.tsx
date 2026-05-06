@@ -1,4 +1,5 @@
 "use client";
+import Modal from "@/components/Modal";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -16,7 +17,20 @@ interface LoginFormProps {
   onSuccess?: () => void;
 }
 
-export function LoginForm({ onSuccess }: LoginFormProps) {
+interface LoginModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Welcome back">
+      <LoginForm onSuccess={onClose} />
+    </Modal>
+  );
+}
+
+function LoginForm({ onSuccess }: LoginFormProps) {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 

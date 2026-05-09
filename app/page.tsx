@@ -1,28 +1,17 @@
-"use client";
-import {useEffect, useRef} from "react";
-import Quill from "quill";
-import "quill/dist/quill.snow.css";
+import { TaskBoard } from "@/components/task/TaskBoard";
+import { getUserSession } from "@/lib/session";
+import { getTasksAction } from "@/actions/task.actions";
 
-export default function MainMenu() {
-  const quillRef = useRef<Quill | null>(null);
+export default async function MainMenu() {
+  const user = await getUserSession();
+  
+  let initialTasks: any[] = [];
+  if (user) {
+    const res = await getTasksAction();
+    if (res.success) {
+      initialTasks = res.data;
+    }
+  }
 
-  useEffect(() => {
-    quillRef.current = new Quill('#editor', {
-      modules: {
-        toolbar: [
-          [{ header: [1, 2, false] }],
-          ['bold', 'italic', 'underline'],
-          ['image', 'code-block'],
-        ],
-      },
-      placeholder: 'Describe',
-      theme: 'snow', // or 'bubble'
-    });
-  }, []); 
-  return (
-    <>
-      <input />
-      <div id="editor"></div>
-    </>
-  );
+  return <TaskBoard user={user} initialTasks={initialTasks} />;
 }

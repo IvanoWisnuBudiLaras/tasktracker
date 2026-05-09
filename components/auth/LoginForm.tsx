@@ -1,65 +1,103 @@
 "use client";
 import Modal from "@/components/Modal";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Mail, Lock } from "lucide-react";
+import { Loader2, Mail, Lock, User as UserIcon } from "lucide-react";
 
-import { loginSchema, type LoginFormValues } from "@/lib/validations/auth";
-import { loginAction } from "@/actions/auth.actions";
+import { loginSchema, registerSchema, type LoginFormValues, type RegisterFormValues } from "@/lib/validations/auth";
+import { loginAction, registerAction } from "@/actions/auth.actions";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-interface LoginFormProps {
-  onSuccess?: () => void;
-}
-
-interface LoginModalProps {
+interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+  const [mode, setMode] = useState<"login" | "register">("login");
+
+  // Reset to login mode when modal opens
+  useEffect(() => {
+    if (isOpen) setMode("login");
+  }, [isOpen]);
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Welcome back">
-      <LoginForm onSuccess={onClose} />
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={mode === "login" ? "Welcome back" : "Create an account"}
+    >
+      <AuthForm mode={mode} setMode={setMode} onSuccess={onClose} />
     </Modal>
   );
 }
 
-function LoginForm({ onSuccess }: LoginFormProps) {
+interface AuthFormProps {
+  mode: "login" | "register";
+  setMode: (mode: "login" | "register") => void;
+  onSuccess?: () => void;
+}
+
+function AuthForm({ mode, setMode, onSuccess }: AuthFormProps) {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  const schema = mode === "login" ? loginSchema : registerSchema;
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<any>({
+    resolver: zodResolver(schema),
     defaultValues: {
+      nama: "",
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
+  // Reset form and messages when mode changes
+  useEffect(() => {
+    reset();
+    setErrorMsg("");
+    setSuccessMsg("");
+  }, [mode, reset]);
+
+  const onSubmit = async (data: any) => {
     setErrorMsg("");
     setSuccessMsg("");
 
-    const result = await loginAction(data.email, data.password);
+    let result;
+    if (mode === "login") {
+      result = await loginAction(data.email, data.password);
+    } else {
+      result = await registerAction(data.nama, data.email, data.password);
+    }
 
     if (result.success) {
       setSuccessMsg(result.message);
       reset();
-      setTimeout(() => {
-        if (onSuccess) onSuccess();
-        window.location.reload();
-      }, 1000);
+      
+      if (mode === "register") {
+        // Switch to login after successful registration
+        setTimeout(() => {
+          setMode("login");
+          setSuccessMsg(""); // clear it so user can login cleanly
+        }, 1500);
+      } else {
+        // Close modal and reload page on successful login
+        setTimeout(() => {
+          if (onSuccess) onSuccess();
+          window.location.reload();
+        }, 1000);
+      }
     } else {
       setErrorMsg(result.message);
     }
@@ -80,6 +118,24 @@ function LoginForm({ onSuccess }: LoginFormProps) {
         </div>
       )}
 
+      {mode === "register" && (
+        <div className="space-y-2">
+          <Label htmlFor="nama">Full Name</Label>
+          <div className="relative">
+            <UserIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              id="nama"
+              placeholder="John Doe"
+              className={`pl-10 ${errors.nama ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+              {...register("nama")}
+            />
+          </div>
+          {errors.nama && (
+            <p className="text-xs text-red-500 font-medium">{errors.nama?.message as string}</p>
+          )}
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="email">Email address</Label>
         <div className="relative">
@@ -93,16 +149,18 @@ function LoginForm({ onSuccess }: LoginFormProps) {
           />
         </div>
         {errors.email && (
-          <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>
+          <p className="text-xs text-red-500 font-medium">{errors.email?.message as string}</p>
         )}
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <a href="#" className="text-xs font-semibold text-blue-600 hover:text-blue-500 transition-colors">
-            Forgot password?
-          </a>
+          {mode === "login" && (
+            <a href="#" className="text-xs font-semibold text-blue-600 hover:text-blue-500 transition-colors">
+              Forgot password?
+            </a>
+          )}
         </div>
         <div className="relative">
           <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -115,30 +173,51 @@ function LoginForm({ onSuccess }: LoginFormProps) {
           />
         </div>
         {errors.password && (
-          <p className="text-xs text-red-500 font-medium">{errors.password.message}</p>
+          <p className="text-xs text-red-500 font-medium">{errors.password?.message as string}</p>
         )}
       </div>
 
       <Button
         type="submit"
-        disabled={isSubmitting || !!successMsg}
+        disabled={isSubmitting || (mode === "login" && !!successMsg)}
         className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md active:scale-[0.98] transition-all"
       >
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Mengecek...
+            {mode === "login" ? "Mengecek..." : "Mendaftar..."}
           </>
-        ) : (
+        ) : mode === "login" ? (
           "Sign in"
+        ) : (
+          "Create Account"
         )}
       </Button>
 
       <p className="text-center text-sm text-gray-600 pt-2">
-        Don&apos;t have an account?{" "}
-        <a href="#" className="font-semibold text-blue-600 hover:text-blue-500 transition-colors">
-          Create one
-        </a>
+        {mode === "login" ? (
+          <>
+            Don&apos;t have an account?{" "}
+            <button
+              type="button"
+              onClick={() => setMode("register")}
+              className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              Create one
+            </button>
+          </>
+        ) : (
+          <>
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => setMode("login")}
+              className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              Sign in
+            </button>
+          </>
+        )}
       </p>
     </form>
   );

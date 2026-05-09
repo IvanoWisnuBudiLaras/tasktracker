@@ -49,3 +49,35 @@ export async function loginAction(email: string, password: string) {
     return { success: false, message: "Terjadi kesalahan pada server. Coba lagi nanti." };
   }
 }
+
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  cookieStore.delete("auth_token");
+  return { success: true, message: "Berhasil logout" };
+}
+
+export async function registerAction(nama: string, email: string, password: string) {
+  try {
+    // Check if user already exists
+    const existingUser = await db.select().from(users).where(eq(users.email, email));
+    if (existingUser.length > 0) {
+      return { success: false, message: "Email sudah terdaftar." };
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Insert new user
+    await db.insert(users).values({
+      nama,
+      email,
+      password: hashedPassword,
+    });
+
+    return { success: true, message: "Registrasi berhasil! Silakan login." };
+  } catch (error) {
+    console.error("Error saat register:", error);
+    return { success: false, message: "Terjadi kesalahan pada server. Coba lagi nanti." };
+  }
+}

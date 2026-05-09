@@ -233,6 +233,7 @@ export function TaskBoard({ user, initialTasks }: TaskBoardProps) {
           setTaskToEdit(null);
         }} 
         onEdit={handleEditTask}
+        taskId={taskToEdit ? taskToEdit.id : null}
         initialData={taskToEdit ? {
           judul: taskToEdit.judul,
           description: taskToEdit.description || "",

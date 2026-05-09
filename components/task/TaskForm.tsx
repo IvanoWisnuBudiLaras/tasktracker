@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -10,19 +12,59 @@ export interface TaskFormData {
   status: TaskStatus;
 }
 
-interface TaskFormProps {
+export interface TaskFormProps {
+  /** Unique key untuk membedakan form add vs edit. Contoh: "add" atau "edit-42" */
+  formId: string;
   initialData?: TaskFormData;
   onSubmit: (data: TaskFormData) => void;
   onCancel: () => void;
 }
 
-export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
-  const [formData, setFormData] = useState<TaskFormData>(
-    initialData || { judul: "", description: "", status: "Belum" }
+const STORAGE_KEY = (formId: string) => `task_form_draft_${formId}`;
+
+function getDefaultData(formId: string, initialData?: TaskFormData): TaskFormData {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem(STORAGE_KEY(formId));
+    if (saved) {
+      try {
+        return JSON.parse(saved) as TaskFormData;
+      } catch {
+        // invalid JSON, abaikan
+      }
+    }
+  }
+  return initialData ?? { judul: "", description: "", status: "Belum" };
+}
+
+export function TaskForm({ formId, initialData, onSubmit, onCancel }: TaskFormProps) {
+  const [formData, setFormData] = useState<TaskFormData>(() =>
+    getDefaultData(formId, initialData)
   );
+
+  // Saat formId berubah (misal modal edit dibuka untuk task berbeda),
+  // reset form dari localStorage atau dari initialData
+  useEffect(() => {
+    setFormData(getDefaultData(formId, initialData));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formId]);
+
+  // Simpan ke localStorage setiap kali formData berubah
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY(formId), JSON.stringify(formData));
+    }
+  }, [formData, formId]);
+
+  const handleChange = (field: keyof TaskFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Hapus draft setelah submit berhasil
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(STORAGE_KEY(formId));
+    }
     onSubmit(formData);
   };
 
@@ -33,7 +75,7 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
         <Input
           id="judul"
           value={formData.judul}
-          onChange={(e) => setFormData({ ...formData, judul: e.target.value })}
+          onChange={(e) => handleChange("judul", e.target.value)}
           required
           placeholder="Task title"
         />
@@ -43,7 +85,7 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
         <textarea
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) => handleChange("description", e.target.value)}
           className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           placeholder="Task description"
         />
@@ -53,7 +95,7 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
         <select
           id="status"
           value={formData.status}
-          onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+          onChange={(e) => handleChange("status", e.target.value as TaskStatus)}
           className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <option value="Belum">To Do (Belum)</option>

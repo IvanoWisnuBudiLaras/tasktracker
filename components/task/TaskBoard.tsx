@@ -181,9 +181,12 @@ export function TaskBoard({ user, initialTasks }: TaskBoardProps) {
                   {task.status}
                 </span>
               </div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm flex-grow line-clamp-3 mb-4 whitespace-pre-wrap">
-                {task.description || "No description"}
-              </p>
+              <div
+                className="task-description text-gray-600 dark:text-gray-400 text-sm flex-grow line-clamp-3 mb-4 [&_*]:max-w-full"
+                dangerouslySetInnerHTML={{
+                  __html: task.description || "<span class='italic'>No description</span>",
+                }}
+              />
               <div className="flex justify-between items-center mt-auto pt-4 border-t border-black/5 dark:border-white/5">
                 <span className="text-xs text-gray-500">
                   {new Date(task.createdAt).toLocaleDateString()}

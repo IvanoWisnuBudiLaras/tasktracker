@@ -127,3 +127,79 @@
     @apply font-sans;
     }
 }
+
+/* ─── Quill Snow — theme override ─────────────────────────────────────────── */
+.quill-wrapper .ql-toolbar.ql-snow {
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--muted);
+  padding: 6px 8px;
+}
+
+.quill-wrapper .ql-container.ql-snow {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: transparent;
+  font-size: 0.875rem;
+  min-height: 120px;
+}
+
+.quill-wrapper .ql-editor {
+  min-height: 120px;
+  color: var(--foreground);
+  padding: 10px 12px;
+  line-height: 1.6;
+}
+
+.quill-wrapper .ql-editor.ql-blank::before {
+  color: var(--muted-foreground);
+  font-style: normal;
+  left: 12px;
+}
+
+/* Toolbar buttons */
+.quill-wrapper .ql-snow .ql-stroke {
+  stroke: var(--foreground);
+}
+.quill-wrapper .ql-snow .ql-fill {
+  fill: var(--foreground);
+}
+.quill-wrapper .ql-snow .ql-picker {
+  color: var(--foreground);
+}
+.quill-wrapper .ql-snow .ql-picker-options {
+  background: var(--popover);
+  border-color: var(--border);
+  border-radius: var(--radius);
+  color: var(--foreground);
+}
+.quill-wrapper .ql-snow button:hover .ql-stroke,
+.quill-wrapper .ql-snow button.ql-active .ql-stroke {
+  stroke: var(--primary);
+}
+.quill-wrapper .ql-snow button:hover .ql-fill,
+.quill-wrapper .ql-snow button.ql-active .ql-fill {
+  fill: var(--primary);
+}
+.quill-wrapper .ql-snow .ql-picker-label:hover,
+.quill-wrapper .ql-snow .ql-picker-label.ql-active {
+  color: var(--primary);
+}
+
+/* Focus ring matching shadcn inputs */
+.quill-wrapper:focus-within .ql-container.ql-snow,
+.quill-wrapper:focus-within .ql-toolbar.ql-snow {
+  border-color: var(--ring);
+  outline: none;
+}
+
+/* Rendered HTML description in task cards */
+.task-description p { margin-bottom: 0.25rem; }
+.task-description ul { list-style: disc; padding-left: 1.25rem; }
+.task-description ol { list-style: decimal; padding-left: 1.25rem; }
+.task-description strong { font-weight: 600; }
+.task-description em { font-style: italic; }
+.task-description code { font-family: monospace; background: var(--muted); padding: 0 3px; border-radius: 3px; }
+.task-description blockquote { border-left: 3px solid var(--border); padding-left: 0.75rem; color: var(--muted-foreground); }

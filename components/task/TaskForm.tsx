@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { QuillEditor } from "./QuillEditor";
 
 export type TaskStatus = "Belum" | "Proses" | "Selesai";
 
@@ -81,13 +82,11 @@ export function TaskForm({ formId, initialData, onSubmit, onCancel }: TaskFormPr
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <textarea
-          id="description"
+        <Label>Description</Label>
+        <QuillEditor
           value={formData.description}
-          onChange={(e) => handleChange("description", e.target.value)}
-          className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Task description"
+          onChange={(html) => handleChange("description", html)}
+          placeholder="Task description…"
         />
       </div>
       <div className="space-y-2">
